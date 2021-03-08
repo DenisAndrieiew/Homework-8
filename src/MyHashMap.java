@@ -27,7 +27,7 @@ public class MyHashMap {
             if (size > capacity * LOAD_FACTOR) {
                 rebuild();
             }
-            int position = (int) hash / bucketRange;
+            int position = (int) (hash / bucketRange);
             Entry entry = map[position];
 
             if (position != 0 && entry.getKey() == null) {
@@ -109,8 +109,8 @@ public class MyHashMap {
     }
 
     private void rebuild() {
-        System.out.println("rebuilding");
-        System.out.println("capacity was - " + capacity);
+//        System.out.println("rebuilding");
+//        System.out.println("capacity was - " + capacity);
         int newCapacity = (int) (capacity * REBUILD_FACTOR);
         System.out.println("new capacity - " + newCapacity);
         MyHashMap newMap = new MyHashMap(newCapacity);
