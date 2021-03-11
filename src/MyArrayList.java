@@ -2,8 +2,9 @@ import java.util.Arrays;
 
 public class MyArrayList {
     private static final int INITIAL_CAPACITY = 10;
-    private int capacity;
     Object[] items;
+    private int capacity;
+    private int size = 0;
 
     public MyArrayList(int capacity) {
         this.capacity = capacity;
@@ -14,9 +15,9 @@ public class MyArrayList {
         this(INITIAL_CAPACITY);
     }
 
-    private static void increaseCapacity(MyArrayList myArrayList) {
-        myArrayList.capacity = (int) (myArrayList.capacity * 1.25);
-        myArrayList.items = Arrays.copyOf(myArrayList.items, myArrayList.capacity);
+    private void increaseCapacity() {
+        this.capacity = (int) (capacity * 1.5 + 1);
+        this.items = Arrays.copyOf(items, capacity);
     }
 
     public void add(Object value) {
@@ -24,21 +25,22 @@ public class MyArrayList {
         while (this.items[index] != null) {
             index++;
             if (index == this.items.length - 1) {
-                increaseCapacity(this);
+                this.increaseCapacity();
             }
         }
         items[index] = value;
-
+        size++;
     }
 
     public void remove(int index) {
-        Object[] buffer = Arrays.copyOf(this.items, this.items.length - 1);
-        System.arraycopy(buffer, index, this.items, index - 1, this.capacity - index - 2);
-        int i = 0;
-        while (this.items[i] != null) {
-            i++;
+        if (size == 0 || index > size) {
+            System.out.println("nothing to remove");
+            return;
         }
-        this.items[i - 1] = null;
+        Object[] buffer = Arrays.copyOfRange(this.items, index + 1, this.items.length - 1);
+        System.arraycopy(buffer, 0, this.items, index, buffer.length);
+        this.items[size] = null;
+        size--;
     }
 
     // тестовый метод для отладки.
@@ -53,15 +55,17 @@ public class MyArrayList {
     }
 
     public int size() {
-        int i = 0;
-        while (this.items[i] != null) {
-            i++;
-        }
-        return i;
+        return size;
     }
 
     public Object get(int index) {
         return this.items[index];
+    }
+
+    public void clear() {
+        this.capacity = INITIAL_CAPACITY;
+        this.items = new Object[capacity];
+        this.size = 0;
     }
 }
 

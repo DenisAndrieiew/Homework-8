@@ -6,17 +6,14 @@ public class MyQueueTest {
             String o = "" + i;
             myQueue.add(o);
         }
-        for (int i = 0; i < myQueue.size(); i++) {
-            System.out.print(myQueue.get(i) + " ");
-        }
+        System.out.println(myQueue.peek());
+        System.out.println(myQueue.peek());
         System.out.println("\nsize is " + myQueue.size());
 
         System.out.println("Testing remove");
         myQueue.remove(12);
         myQueue.remove(17);
-        for (int i = 0; i < myQueue.size(); i++) {
-            System.out.print(myQueue.get(i) + " ");
-        }
+
         System.out.println("\nsize is " + myQueue.size());
 
         System.out.println("size is " + myQueue.size());
@@ -29,14 +26,11 @@ public class MyQueueTest {
             System.out.print(myQueue.poll() + " ");
         }
         System.out.println();
-        for (int i = 0; i < myQueue.size(); i++) {
-            System.out.print(myQueue.get(i) + " ");
-        }
+        System.out.println(myQueue.size());
+
         System.out.println("\nTesting clear");
         myQueue.clear();
-        for (int i = 0; i < myQueue.size(); i++) {
-            System.out.print(myQueue.get(i) + " ");
-        }
+        System.out.println(myQueue.peek());
 
     }
 

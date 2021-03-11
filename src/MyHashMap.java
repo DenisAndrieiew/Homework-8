@@ -4,9 +4,7 @@ public class MyHashMap {
     static final float LOAD_FACTOR = 0.75f;
     static final float REBUILD_FACTOR = 1.5f;
     int capacity;
-    int bucketRange;
-    int size = 0;
-    Entry[] map;
+    EntryList[] map;
 
     public MyHashMap() {
         this(INITIAL_CAPACITY);
@@ -14,93 +12,55 @@ public class MyHashMap {
 
     public MyHashMap(int capacity) {
         this.capacity = capacity;
-        map = Entry.arrayCreate(capacity);
-        bucketRange = Integer.MAX_VALUE / capacity;
+        map = EntryList.arrayCreate(capacity);
     }
 
     public void put(Object key, Object value) {
-        if (key != null) {
-            int hash = Math.abs(key.toString().hashCode());
-
-            size++;
-
-            if (size > capacity * LOAD_FACTOR && capacity < MAX_CAPACITY) {
-                rebuild();
-            }
-            int position = (hash / bucketRange);
-            Entry entry = map[position];
-
-            if (position != 0 && entry.getKey() == null) {
-                entry.setKey(key);
-                entry.setValue(value);
+        if (key == null) {
+            if (value == null) {
                 return;
             }
-            while (entry.hasNext()) {
-                if (entry.keyIsEqual(key)) {
-                    entry.setValue(value);
-                    return;
-                }
-                entry = entry.getNext();
-            }
-            entry.setNext(new Entry(key, value));
-        } else {
-            map[0].setValue(value);
-        }
-    }
-
-    public void remove(Object key) {
-        if (key != null) {
-            int hash = Math.abs(key.toString().hashCode());
-            int position = hash / bucketRange;
-            Entry entry = map[position];
-            if (entry.keyIsEqual(key)) {
-                map[position] = entry.getNext();
-                return;
-            }
-            while (entry.hasNext()) {
-                if (entry.getNext().keyIsEqual(key)) {
-                    entry.setNext(entry.getNext().getNext());
-                    size--;
-                    return;
-                }
-                entry = entry.getNext();
-            }
-            System.out.println("invalid key");
+            map[0].add(new Entry(null, value));
             return;
         }
-        map[0].setValue(null);
+        int hash = Math.abs(key.hashCode());
+        if (size() > capacity * LOAD_FACTOR && capacity < MAX_CAPACITY) {
+            rebuild();
+        }
+        int position = hash % (map.length - 1);
+        map[position].add(new Entry(key, value));
+    }
+
+    public void remove(Object key) throws IllegalKeyException {
+        if (key == null) {
+            map[0].remove(null);
+            return;
+        }
+        int hash = Math.abs(key.hashCode());
+        int position = hash % (map.length - 1);
+        map[position].remove(key);
     }
 
     public void clear() {
         capacity = INITIAL_CAPACITY;
-        map = Entry.arrayCreate(capacity);
-        size = 0;
+        map = EntryList.arrayCreate(capacity);
     }
 
     public int size() {
+        int size = 0;
+        for (int i = 0; i < map.length - 1; i++) {
+            size += map[i].getSize();
+        }
         return size;
     }
 
-    public Object getValue(Object key) throws IllegalKeyException {
+    public Object get(Object key) throws IllegalKeyException {
         if (key == null) {
-            return map[0].getValue();
+            return map[0].get(null);
         }
-        int hash = Math.abs(key.toString().hashCode());
-        int position = hash / bucketRange;
-        Entry entry = map[position];
-        if (entry.keyIsEqual(key)) {
-            return entry.getValue();
-        }
-        while (entry.hasNext()) {
-            entry = entry.getNext();
-            if (entry.keyIsEqual(key)) {
-                return entry.getValue();
-            }
-
-
-        }
-        throw new IllegalKeyException("key is absent", key);
-
+        int hash = Math.abs(key.hashCode());
+        int position = hash % (map.length - 1);
+        return map[position].get(key);
     }
 
     private void rebuild() {
@@ -108,19 +68,127 @@ public class MyHashMap {
                 (capacity * REBUILD_FACTOR) : MAX_CAPACITY);
         MyHashMap newMap = new MyHashMap(newCapacity);
         for (int i = 0; i < capacity; i++) {
-            Entry entry = map[i];
-            newMap.put(entry.getKey(), entry.getValue());
-            while (entry.hasNext()) {
-                entry = entry.getNext();
-                newMap.put(entry.getKey(), entry.getValue());
-            }
+
+            entryListCopyTo(map[i], newMap);
         }
         this.capacity = newCapacity;
-        this.bucketRange = Integer.MAX_VALUE / capacity;
-        this.size = newMap.size;
         this.map = newMap.map;
     }
 
+    private void entryListCopyTo(EntryList source, MyHashMap target) {
+        Entry tail = source.head;
+        target.put(tail.getKey(), tail.getValue());
+
+        while (tail.hasNext()) {
+            tail = tail.getNext();
+            target.put(tail.getKey(), tail.getValue());
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < map.length - 1; i++) {
+            builder.append("[").append(i).append("]").append(" - ").append(map[i].toString()).append("\n");
+        }
+        return builder.toString();
+    }
+
+    private static class EntryList {
+        private Entry head = new Entry();
+        private int size = 0;
+
+        private static EntryList[] arrayCreate(int capacity) {
+            EntryList[] entries = new EntryList[capacity];
+            for (int i = 0; i < capacity; i++) {
+                entries[i] = new EntryList();
+            }
+            return entries;
+        }
+
+        protected void add(Entry entry) {
+            if (entry.getKey() == null) {
+                if (head.getValue() == null) {
+                    size++;
+                }
+                head.setValue(entry.getValue());
+                return;
+            }
+            Entry tail = head;
+            while (tail.hasNext()) {
+                tail = tail.getNext();
+                if (tail.keyIsEqual(entry.getKey())) {
+                    tail.setValue(entry.getValue());
+                    return;
+                }
+            }
+            tail.setNext(entry);
+            size++;
+        }
+
+        protected void remove(Object key) throws IllegalKeyException {
+            if (key == null) {
+                if (head.getValue() != null) {
+                    head.setValue(null);
+                    size--;
+                }
+                return;
+            }
+            Entry tail = head;
+            Entry previous;
+            while (tail.hasNext()) {
+                previous = tail;
+                tail = tail.getNext();
+                if (tail.keyIsEqual(key)) {
+                    previous.setNext(tail.next);
+                    size--;
+                    return;
+                }
+            }
+            throw new IllegalKeyException("nothing to remove", key);
+        }
+
+        protected Object get(Object key) throws IllegalKeyException {
+            if (key == null && head.getValue() != null) {
+                return head.getValue();
+            }
+            if (key == null) {
+                throw new IllegalKeyException("nothing with null-key", null);
+            }
+            Entry tail = head;
+            while (tail.hasNext()) {
+                tail = tail.getNext();
+                if (tail.keyIsEqual(key)) {
+                    return tail.getValue();
+                }
+            }
+            throw new IllegalKeyException("key is missing", key);
+        }
+
+
+        protected int getSize() {
+            return size;
+        }
+
+        //метод для тестового вывода
+        @Override
+        public String toString() {
+            StringBuilder builder = new StringBuilder();
+            if (head.getValue() != null) {
+                builder.append(head.getValue().toString());
+            }
+            if (this.head.hasNext()) {
+                Entry tail = head;
+                while (tail.hasNext()) {
+                    tail = tail.getNext();
+                    if (tail.getValue() != null) {
+                        builder.append(tail.getValue().toString()).append(" - ");
+                    }
+                }
+            }
+            return builder.toString();
+        }
+    }
 
     private static class Entry {
         private Object key;
@@ -137,21 +205,11 @@ public class MyHashMap {
             this.next = null;
         }
 
-        private static Entry[] arrayCreate(int capacity) {
-            Entry[] entries = new Entry[capacity];
-            for (int i = 0; i < capacity; i++) {
-                entries[i] = new Entry();
-            }
-            return entries;
-        }
 
         private Object getKey() {
             return key;
         }
 
-        private void setKey(Object key) {
-            this.key = key;
-        }
 
         private Object getValue() {
             return value;

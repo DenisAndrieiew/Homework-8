@@ -1,68 +1,25 @@
-public class MyLinkedList {
-    Node head = new Node();
-
-    public void add(Object value) {
-        Node tail = head;
-        while (tail.next != null) {
-            tail = tail.next;
-        }
-        new Node(tail, value);
-    }
-
-    public void remove(int index) {
-        if (index <= this.size()) {
-            Node tail = find(index);
-            tail.previous.next = tail.next;
-            tail.next.previous = tail.previous;
-        }
-    }
-
-    public void clear() {
-        head.next = null;
-    }
-
-    public int size() {
-        int i = 0;
-        Node tail = head;
-        while (tail.next != null) {
-            tail = tail.next;
-            i++;
-        }
-        return i;
-    }
-
-    private Node find(int index) {
-        Node tail = head.next;
-        for (int i = 0; i < index; i++) {
-            tail = tail.next;
-        }
-        return tail;
-    }
-
+public class MyLinkedList extends MyList {
     public Object get(int index) {
-        return find(index).object;
-    }
-
-    static class Node {
-        protected Node previous;
-        protected Node next;
-        protected Object object;
-
-        protected Node(Node previous, Object object) {
-
-            this.object = object;
-            this.previous = previous;
-            if (previous != null) {
-                if (previous.next != null) {
-                    this.next = previous.next;
-                    this.next.previous = this;
-                }
-                previous.next = this;
+        Node tail = this.getHead().getNext();
+        for (int i = 0; i < index; i++) {
+            if (tail.hasNext()) {
+                tail = tail.getNext();
+            } else {
+                System.out.println("invalid index");
+                return null;
             }
         }
-
-        protected Node() {
-            this(null, null);
-        }
+        return tail.getObject();
     }
+
+    public void add(Object value) {
+        Node tail = this.getHead();
+        while (tail.hasNext()) {
+            tail = tail.getNext();
+        }
+        Node newNode = new Node(tail, value);
+        tail.setNext(newNode);
+        sizeIncrease();
+    }
+
 }
