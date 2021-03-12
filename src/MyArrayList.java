@@ -42,7 +42,6 @@ public class MyArrayList {
         this.items[size] = null;
         size--;
     }
-
     // тестовый метод для отладки.
     public String toString() {
         StringBuilder builder = new StringBuilder();

@@ -3,8 +3,8 @@ public class MyHashMap {
     static final int MAX_CAPACITY = 1 << 30;
     static final float LOAD_FACTOR = 0.75f;
     static final float REBUILD_FACTOR = 1.5f;
-    int capacity;
-    EntryList[] map;
+    private int capacity;
+    private EntryList[] map;
 
     public MyHashMap() {
         this(INITIAL_CAPACITY);
